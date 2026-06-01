@@ -7,11 +7,13 @@ from apps.catalog.models import (
     ModelHealthEvent,
     ModelHealthOverride,
     ModelHealthRule,
+    PolicyDraft,
     ProviderCredential,
     RecoveryStrategy,
     ResponseValidationRule,
     RoutingPolicy,
     RoutingRule,
+    ServiceFeature,
     ThresholdRule,
     UsageQuota,
 )
@@ -377,6 +379,51 @@ class UsageQuotaSerializer(serializers.ModelSerializer):
         if monthly_request_limit is None and monthly_cost_limit_usd is None:
             raise serializers.ValidationError("At least one monthly limit is required.")
         return attrs
+
+
+class ServiceFeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceFeature
+        fields = [
+            "id",
+            "name",
+            "description",
+            "required_tier",
+            "routing_path",
+            "condition_key",
+            "main_metrics",
+            "sort_order",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class PolicyDraftSerializer(serializers.ModelSerializer):
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True, allow_null=True)
+
+    class Meta:
+        model = PolicyDraft
+        fields = [
+            "id",
+            "name",
+            "preset",
+            "selected_model_ids",
+            "tier_assignments",
+            "feature_model_map",
+            "routing_rules",
+            "threshold_rules",
+            "validation_rules",
+            "recovery_strategies",
+            "summary_text",
+            "missing_coverage",
+            "is_saved",
+            "created_by",
+            "created_by_username",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_by"]
 
 
 class ModelHealthRuleSerializer(serializers.ModelSerializer):

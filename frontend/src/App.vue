@@ -20,25 +20,35 @@ import Screens from './pages/Screens.vue'
 import SecuritySettings from './pages/SecuritySettings.vue'
 import UserSessions from './pages/UserSessions.vue'
 import AuditLogs from './pages/AuditLogs.vue'
+import ModelEvaluation from './pages/ModelEvaluation.vue'
+import TierRecommendation from './pages/TierRecommendation.vue'
+import ServiceFeatureMapping from './pages/ServiceFeatureMapping.vue'
+import FeatureRanking from './pages/FeatureRanking.vue'
+import PolicyDraftGenerator from './pages/PolicyDraftGenerator.vue'
 import Login from './pages/Login.vue'
 import {
   ActivityIcon,
+  BarChart3Icon,
   BotIcon,
   CheckSquareIcon,
   CpuIcon,
   KeyRoundIcon,
+  FlaskConicalIcon,
   GaugeIcon,
   HeartPulseIcon,
   HistoryIcon,
+  LayersIcon,
   ListChecksIcon,
   LayoutDashboardIcon,
   LayoutIcon,
   ListTreeIcon,
   LogOutIcon,
   MoonIcon,
+  NetworkIcon,
   RepeatIcon,
   RouteIcon,
   SlidersHorizontalIcon,
+  SparklesIcon,
   SunIcon,
   TerminalIcon,
   UsersIcon,
@@ -63,6 +73,11 @@ const tabs = [
   { id: 'health-events', label: 'Health Events', component: HealthEvents, group: 'service', icon: HistoryIcon },
   { id: 'health-overrides', label: 'Health Overrides', component: HealthOverrides, group: 'service', icon: HeartPulseIcon },
   { id: 'logs', label: 'Routing Logs', component: RoutingLogs, group: 'service', icon: ActivityIcon },
+  { id: 'model-evaluation', label: 'Model Evaluation', component: ModelEvaluation, group: 'policy-draft', icon: FlaskConicalIcon },
+  { id: 'tier-recommendation', label: 'Tier Recommendation', component: TierRecommendation, group: 'policy-draft', icon: LayersIcon },
+  { id: 'service-features', label: 'Service Features', component: ServiceFeatureMapping, group: 'policy-draft', icon: NetworkIcon },
+  { id: 'feature-ranking', label: 'Feature Ranking', component: FeatureRanking, group: 'policy-draft', icon: BarChart3Icon },
+  { id: 'policy-draft', label: 'Policy Draft Generator', component: PolicyDraftGenerator, group: 'policy-draft', icon: SparklesIcon },
   { id: 'users', label: 'Users', component: Users, group: 'admin', icon: UsersIcon },
   { id: 'screens', label: 'Screens', component: Screens, group: 'admin', icon: LayoutIcon },
   { id: 'security-settings', label: 'Security Settings', component: SecuritySettings, group: 'admin', icon: KeyRoundIcon },
@@ -74,6 +89,7 @@ type TabId = (typeof tabs)[number]['id']
 
 const navGroups = [
   { id: 'service', label: 'Service' },
+  { id: 'policy-draft', label: 'Policy Draft' },
   { id: 'admin', label: 'Access Management' }
 ] as const
 

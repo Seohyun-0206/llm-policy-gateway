@@ -5,17 +5,20 @@ from rest_framework.views import APIView
 
 from apps.accounts.audit import record_audit_log
 from apps.accounts.permissions import HasScreenAccess
+from apps.catalog.draft import generate_draft, get_tier_recommendations, save_draft_as_policy
 from apps.catalog.provider_models import fetch_provider_models, humanize_model_name
 from apps.catalog.models import (
     LLMModel,
     ModelHealthEvent,
     ModelHealthOverride,
     ModelHealthRule,
+    PolicyDraft,
     ProviderCredential,
     RecoveryStrategy,
     ResponseValidationRule,
     RoutingPolicy,
     RoutingRule,
+    ServiceFeature,
     ThresholdRule,
     UsageQuota,
 )
@@ -24,11 +27,13 @@ from apps.catalog.serializers import (
     ModelHealthEventSerializer,
     ModelHealthOverrideSerializer,
     ModelHealthRuleSerializer,
+    PolicyDraftSerializer,
     ProviderCredentialSerializer,
     RecoveryStrategySerializer,
     ResponseValidationRuleSerializer,
     RoutingPolicySerializer,
     RoutingRuleSerializer,
+    ServiceFeatureSerializer,
     ThresholdRuleSerializer,
     UsageQuotaSerializer,
 )
@@ -428,6 +433,95 @@ class UsageQuotaDetailView(AuditCrudMixin, generics.RetrieveUpdateDestroyAPIView
     permission_classes = [HasScreenAccess]
     required_screen = "quotas"
     audit_resource_type = "usage_quota"
+
+
+class ServiceFeatureListView(AuditCrudMixin, generics.ListCreateAPIView):
+    queryset = ServiceFeature.objects.all()
+    serializer_class = ServiceFeatureSerializer
+    permission_classes = [HasScreenAccess]
+    required_screen = "service-features"
+    audit_resource_type = "service_feature"
+
+
+class ServiceFeatureDetailView(AuditCrudMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = ServiceFeature.objects.all()
+    serializer_class = ServiceFeatureSerializer
+    permission_classes = [HasScreenAccess]
+    required_screen = "service-features"
+    audit_resource_type = "service_feature"
+
+
+class TierRecommendationView(APIView):
+    permission_classes = [HasScreenAccess]
+    required_screen = "tier-recommendation"
+
+    def get(self, request):
+        raw = request.query_params.get("model_ids", "")
+        if raw:
+            try:
+                model_ids = [int(x) for x in raw.split(",") if x.strip()]
+            except ValueError:
+                return Response({"detail": "Invalid model_ids parameter."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            model_ids = list(LLMModel.objects.filter(is_active=True).values_list("id", flat=True))
+        return Response(get_tier_recommendations(model_ids))
+
+
+class PolicyDraftGenerateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=120)
+    preset = serializers.ChoiceField(choices=["cost-first", "quality-first", "balanced", "privacy-first"])
+    model_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
+    feature_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
+    tier_overrides = serializers.DictField(child=serializers.CharField(), required=False, default=dict)
+
+
+class PolicyDraftGenerateView(APIView):
+    permission_classes = [HasScreenAccess]
+    required_screen = "policy-draft"
+
+    def post(self, request):
+        serializer = PolicyDraftGenerateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        draft = generate_draft(
+            name=data["name"],
+            preset=data["preset"],
+            model_ids=data["model_ids"],
+            feature_ids=data["feature_ids"],
+            tier_overrides=data.get("tier_overrides", {}),
+            created_by=request.user,
+        )
+        return Response(PolicyDraftSerializer(draft).data, status=status.HTTP_201_CREATED)
+
+
+class PolicyDraftListView(generics.ListAPIView):
+    queryset = PolicyDraft.objects.select_related("created_by").all()
+    serializer_class = PolicyDraftSerializer
+    permission_classes = [HasScreenAccess]
+    required_screen = "policy-draft"
+
+
+class PolicyDraftDetailView(generics.RetrieveAPIView):
+    queryset = PolicyDraft.objects.select_related("created_by").all()
+    serializer_class = PolicyDraftSerializer
+    permission_classes = [HasScreenAccess]
+    required_screen = "policy-draft"
+
+
+class PolicyDraftSaveView(APIView):
+    permission_classes = [HasScreenAccess]
+    required_screen = "policy-draft"
+
+    def post(self, request, pk):
+        draft = generics.get_object_or_404(PolicyDraft, pk=pk)
+        if draft.is_saved:
+            return Response({"detail": "Draft already saved as a policy."}, status=status.HTTP_400_BAD_REQUEST)
+        policy = save_draft_as_policy(draft)
+        return Response({
+            "saved": True,
+            "policy_id": policy.id,
+            "policy_name": policy.display_name,
+        })
 
 
 class ModelHealthRuleListView(AuditCrudMixin, generics.ListCreateAPIView):

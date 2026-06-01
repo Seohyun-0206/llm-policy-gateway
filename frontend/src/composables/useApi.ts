@@ -465,6 +465,124 @@ export type UserSession = {
   is_expired: boolean
 }
 
+export type ServiceFeature = {
+  id: number
+  name: string
+  description: string
+  required_tier: string
+  routing_path: string
+  condition_key: string
+  main_metrics: string[]
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ServiceFeaturePayload = Omit<ServiceFeature, 'id' | 'created_at' | 'updated_at'>
+
+export type TierRecommendation = {
+  model_id: number
+  provider: string
+  name: string
+  display_name: string
+  current_tier: string
+  suggested_tier: string
+  reason: string
+  quality_level: number
+  speed_level: number
+  cost_level: number
+  privacy_level: string
+  context_window: number
+  role: string
+}
+
+export type PolicyDraftRule = {
+  rule_id: string
+  name: string
+  description: string
+  condition_key: string
+  target_tier: string
+  priority: number
+}
+
+export type PolicyDraftThresholdRule = {
+  rule_id: string
+  name: string
+  description: string
+  metric_key: string
+  operator: string
+  threshold_value: string
+  action_on_trigger: string
+  target_tier: string
+  max_tokens: number | null
+  priority: number
+}
+
+export type PolicyDraftValidationRule = {
+  rule_id: string
+  name: string
+  description: string
+  condition_key: string
+  validation_type: string
+  action_on_fail: string
+  max_retries: number
+  target_tier: string
+  priority: number
+}
+
+export type PolicyDraftRecoveryStrategy = {
+  strategy_id: string
+  name: string
+  description: string
+  trigger_event: string
+  action: string
+  max_retries: number
+  target_tier: string
+  priority: number
+}
+
+export type PolicyDraftMissingCoverage = {
+  feature_id: number
+  feature_name: string
+  required_tier: string
+  message: string
+}
+
+export type PolicyDraft = {
+  id: number
+  name: string
+  preset: string
+  selected_model_ids: number[]
+  tier_assignments: Record<string, string>
+  feature_model_map: Record<string, number[]>
+  routing_rules: PolicyDraftRule[]
+  threshold_rules: PolicyDraftThresholdRule[]
+  validation_rules: PolicyDraftValidationRule[]
+  recovery_strategies: PolicyDraftRecoveryStrategy[]
+  summary_text: string
+  missing_coverage: PolicyDraftMissingCoverage[]
+  is_saved: boolean
+  created_by: number | null
+  created_by_username: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PolicyDraftGeneratePayload = {
+  name: string
+  preset: string
+  model_ids: number[]
+  feature_ids: number[]
+  tier_overrides?: Record<string, string>
+}
+
+export type PolicyDraftSaveResult = {
+  saved: boolean
+  policy_id: number
+  policy_name: string
+}
+
 export type AuditLog = {
   id: number
   actor: number | null
@@ -733,6 +851,32 @@ export function useApi() {
       request<RoutingSimulationResponse>('/api/routing-simulator/', {
         method: 'POST',
         body: JSON.stringify({ prompt, policy })
-      })
+      }),
+    getTierRecommendations: (modelIds?: number[]) => {
+      const query = modelIds && modelIds.length ? `?model_ids=${modelIds.join(',')}` : ''
+      return request<TierRecommendation[]>(`/api/tier-recommendations/${query}`)
+    },
+    getServiceFeatures: () => request<ServiceFeature[]>('/api/service-features/'),
+    createServiceFeature: (payload: ServiceFeaturePayload) =>
+      request<ServiceFeature>('/api/service-features/', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }),
+    updateServiceFeature: (id: number, payload: Partial<ServiceFeaturePayload>) =>
+      request<ServiceFeature>(`/api/service-features/${id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      }),
+    deleteServiceFeature: (id: number) =>
+      request<Record<string, never>>(`/api/service-features/${id}/`, { method: 'DELETE' }),
+    generatePolicyDraft: (payload: PolicyDraftGeneratePayload) =>
+      request<PolicyDraft>('/api/policy-draft/generate/', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }),
+    getPolicyDrafts: () => request<PolicyDraft[]>('/api/policy-drafts/'),
+    getPolicyDraft: (id: number) => request<PolicyDraft>(`/api/policy-drafts/${id}/`),
+    savePolicyDraft: (id: number) =>
+      request<PolicyDraftSaveResult>(`/api/policy-drafts/${id}/save/`, { method: 'POST' })
   }
 }

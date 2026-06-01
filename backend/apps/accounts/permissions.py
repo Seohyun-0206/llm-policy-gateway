@@ -4,7 +4,7 @@ from apps.accounts.serializers import get_allowed_screens
 
 
 class HasScreenAccess(BasePermission):
-    execute_screens = {"playground", "simulator"}
+    execute_screens = {"playground", "simulator", "policy-draft", "service-features"}
 
     def has_permission(self, request, view):
         if not request.user or not request.user.is_authenticated:

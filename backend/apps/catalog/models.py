@@ -407,6 +407,74 @@ class ModelHealthEvent(models.Model):
         return f"{self.provider}/{self.model_name} {self.event_type}"
 
 
+class ServiceFeature(models.Model):
+    TIER_CHOICES = LLMModel.TIER_CHOICES
+    PATH_CHOICES = [
+        ("lightweight", "Lightweight Path"),
+        ("standard", "Standard Path"),
+        ("advanced", "Advanced Path"),
+        ("long_context", "Long Context Path"),
+        ("structured", "Structured Path"),
+        ("escalation", "Escalation Path"),
+        ("fallback", "Fallback Path"),
+    ]
+    CONDITION_CHOICES = RoutingRule.CONDITION_CHOICES
+
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    required_tier = models.CharField(max_length=32, choices=TIER_CHOICES, default="standard")
+    routing_path = models.CharField(max_length=32, choices=PATH_CHOICES, default="standard")
+    condition_key = models.CharField(max_length=32, choices=CONDITION_CHOICES, default="general")
+    main_metrics = models.JSONField(default=list, blank=True)
+    sort_order = models.PositiveIntegerField(default=100)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class PolicyDraft(models.Model):
+    PRESET_CHOICES = [
+        ("cost-first", "Cost First"),
+        ("quality-first", "Quality First"),
+        ("balanced", "Balanced"),
+        ("privacy-first", "Privacy First"),
+    ]
+
+    name = models.CharField(max_length=120)
+    preset = models.CharField(max_length=32, choices=PRESET_CHOICES, default="balanced")
+    selected_model_ids = models.JSONField(default=list)
+    tier_assignments = models.JSONField(default=dict)
+    feature_model_map = models.JSONField(default=dict)
+    routing_rules = models.JSONField(default=list)
+    threshold_rules = models.JSONField(default=list)
+    validation_rules = models.JSONField(default=list)
+    recovery_strategies = models.JSONField(default=list)
+    summary_text = models.TextField(blank=True)
+    missing_coverage = models.JSONField(default=list)
+    is_saved = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="policy_drafts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name
+
+
 class ModelHealthOverride(models.Model):
     OVERRIDE_CHOICES = [
         ("force_healthy", "Force healthy"),
