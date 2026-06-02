@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { BeakerIcon, CpuIcon, InfoIcon } from 'lucide-vue-next'
+import { BeakerIcon, CpuIcon } from 'lucide-vue-next'
 import AdminDataTable from '../components/common/AdminDataTable.vue'
 import { LLMModel, useApi } from '../composables/useApi'
 
@@ -27,15 +27,6 @@ onMounted(loadModels)
         <p class="mb-1 text-xs font-semibold uppercase tracking-widest text-indigo-400">Policy Draft — Step 0</p>
         <h2 class="text-2xl font-bold text-zinc-100">Model Evaluation</h2>
         <p class="mt-1 text-sm text-zinc-500">등록된 모델 목록을 확인합니다. 실제 평가 실행은 2단계에서 추가될 예정입니다.</p>
-      </div>
-    </div>
-
-    <div class="mb-5 rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 flex items-start gap-3">
-      <InfoIcon class="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" />
-      <div class="text-sm text-indigo-300">
-        <p class="font-medium">Phase 1 MVP</p>
-        <p class="mt-1 text-indigo-400">현재 단계에서는 등록된 모델의 메타데이터(quality, speed, cost, context window)를 기반으로 Tier를 추천합니다.
-        실제 데이터셋을 이용한 평가 실행은 2단계에서 구현됩니다.</p>
       </div>
     </div>
 
